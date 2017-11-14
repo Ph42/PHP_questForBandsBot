@@ -1,0 +1,224 @@
+
+create table state_of_team
+(
+	id int not null auto_increment,
+	descript varchar(100) not null,
+	PRIMARY KEY (id)
+);
+
+create table state_of_member
+(
+	id int not null auto_increment,
+	descript varchar(100) not null,
+	PRIMARY KEY (id)
+);
+
+create table state_of_team_member
+(
+	id int not null auto_increment,
+	descript varchar(100) not null,
+	PRIMARY KEY (id)
+);
+
+create table state_of_quest
+(
+	id int not null auto_increment,
+	descript varchar(100) not null,
+	PRIMARY KEY (id)
+);
+
+create table state_of_quest_team
+(
+	id int not null auto_increment,
+	descript varchar(100) not null,
+	PRIMARY KEY (id)
+);
+
+/* --Ex
+create table TableName
+(
+	id int not null auto_increment,
+
+	
+	PRIMARY KEY (id)
+);
+*/
+
+
+---------------------------------------
+--Insert States
+
+insert into state_of_team (descript)
+	values ('есть активные квесты');	
+insert into state_of_team (descript)
+	values ('нет активных квестов');
+insert into state_of_team (descript)
+	values ('удалена');
+-----------------------
+
+insert into state_of_member (descript)
+	values ('активен');
+insert into state_of_member (descript)
+	values ('удалён');
+
+------------------------
+insert into state_of_team_member (descript)
+	values ('активен');
+insert into state_of_team_member (descript)
+	values ('не получает уведомления');
+insert into state_of_team_member (descript)
+	values ('удалён из команды');
+insert into state_of_team_member (descript)
+	values ('команда удалена');
+insert into state_of_team_member (descript)
+	values ('не получает сторонние уведомления');
+------------------------
+
+
+insert into state_of_quest (descript)
+	values ('регистрация ещё не началась');
+insert into state_of_quest (descript)
+	values ('регистрация');
+insert into state_of_quest (descript)
+	values ('регистрация окончена');
+insert into state_of_quest (descript)
+	values ('активен');
+insert into state_of_quest (descript)
+	values ('завершён');
+
+
+-------------------------
+insert into state_of_quest_team (descript)
+	values ('зарегистрирована');
+insert into state_of_quest_team (descript)
+	values ('вышла до начала');
+insert into state_of_quest_team (descript)
+	values ('активна');
+insert into state_of_quest_team (descript)
+	values ('вышла до окончания');
+insert into state_of_quest_team (descript)
+	values ('не завершила');
+insert into state_of_quest_team (descript)
+	values ('завершила');
+insert into state_of_quest_team (descript)
+	values ('выиграла');
+
+-------------------------
+------------------------
+
+/* --err
+CREATE TABLE member(
+    id INT NOT NULL AUTO_INCREMENT,
+    id_state_of_member INT not null DEFAULT
+		(SELECT
+		    id
+		FROM
+		    state_of_member
+		WHERE
+		    descript = 'активен';),
+PRIMARY KEY(id),
+CONSTRAINT fk_member_state_of_member FOREIGN KEY (id_state_of_member) REFERENCES state_of_member(id)
+);
+*/
+
+CREATE TABLE member(
+    id INT NOT NULL AUTO_INCREMENT,
+    id_state_of_member INT not null DEFAULT	1, /* активен */
+PRIMARY KEY(id),
+CONSTRAINT fk_member_state_of_member FOREIGN KEY (id_state_of_member) 
+REFERENCES state_of_member(id)
+);
+
+CREATE TABLE team(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_state_of_team INT not null DEFAULT 2, /* нет актив квестов */
+    id_captain int not null,
+    max_members int DEFAULT 6,
+PRIMARY KEY(id),
+CONSTRAINT fk_team_state_of_team FOREIGN KEY (id_state_of_team) 
+	REFERENCES state_of_team(id),
+CONSTRAINT fk_team_capitain FOREIGN KEY (id_captain) 
+	REFERENCES member(id),
+CONSTRAINT chk_max_members CHECK (max_members <= 6)
+);
+
+CREATE TABLE team_member(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_team int not null,
+    id_member int not null,
+    id_state_of_team_member INT not null DEFAULT 1 , /* активен */   
+PRIMARY KEY(id),
+CONSTRAINT fk_team_member_team FOREIGN KEY (id_team) 
+	REFERENCES team(id),
+CONSTRAINT fk_team_member_member FOREIGN KEY (id_member) 
+	REFERENCES member(id),
+CONSTRAINT fk_team_member_state_of_team_member FOREIGN KEY (id_state_of_team_member) 
+	REFERENCES state_of_team_member(id),
+CONSTRAINT unq_team_member UNIQUE (id_team, id_member)
+);
+
+
+CREATE TABLE scenario(
+    id INT NOT NULL AUTO_INCREMENT,    
+    descript text,  
+	PRIMARY KEY(id)
+);
+
+CREATE TABLE point(
+    id INT NOT NULL AUTO_INCREMENT,    
+    keys_count int,
+    descript text, 
+	PRIMARY KEY(id)
+);
+
+
+CREATE TABLE key_point(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_point int,
+    value varchar(20), 
+PRIMARY KEY(id),
+CONSTRAINT fk_key_point_point FOREIGN KEY (id_point) 
+	REFERENCES point(id),
+CONSTRAINT unq_point_value UNIQUE (id_point, value)
+);
+
+
+
+CREATE TABLE point_scenario(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_scenario int NOT NULL,
+    id_point int NOT NULL,
+    n_of_point_in_scenario int,
+PRIMARY KEY(id),
+CONSTRAINT fk_point_scenario_scenario FOREIGN KEY (id_scenario) 
+	REFERENCES scenario(id),
+CONSTRAINT fk_point_scenario_point FOREIGN KEY (id_point) 
+	REFERENCES point(id),
+CONSTRAINT unq_scenario_point UNIQUE (id_scenario, id_point),
+CONSTRAINT chk_n_of_point_in_scenario CHECK (n_of_point_in_scenario >= 1)
+);
+
+CREATE TABLE quest(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_scenario int not null,
+    id_state_of_quest int not null DEFAULT 1, /* регистр ещё не началась */
+    id_winner int,
+    start_reg TIMESTAMP not null,
+    stop_reg TIMESTAMP not null,
+    start_q TIMESTAMP not null,
+    stop_q TIMESTAMP not null,
+    stop_q_fact TIMESTAMP,
+    max_teams int DEFAULT 10,
+    descript text,
+PRIMARY KEY(id),
+CONSTRAINT fk_quest_scenario FOREIGN KEY (id_scenario)
+	REFERENCES scenario(id),
+CONSTRAINT fk_quest_state_of_quest FOREIGN KEY (id_state_of_quest)
+	REFERENCES state_of_quest(id),
+CONSTRAINT fk_quest_winner FOREIGN KEY (id_winner)
+	REFERENCES team(id),
+CONSTRAINT chk_max_teams CHECK (max_teams >= 1),
+CONSTRAINT chk_times_is_right CHECK (start_reg < stop_reg AND stop_reg <= start_q AND start_q < stop_q)
+);
+
+--Done
