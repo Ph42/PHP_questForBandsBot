@@ -221,4 +221,84 @@ CONSTRAINT chk_max_teams CHECK (max_teams >= 1),
 CONSTRAINT chk_times_is_right CHECK (start_reg < stop_reg AND stop_reg <= start_q AND start_q < stop_q)
 );
 
+CREATE TABLE quest_team(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_team int not null,
+    id_quest int not null,
+    id_state_of_quest_team int not null DEFAULT 1, /* зарегистрирована */
+    reg TIMESTAMP not null,
+PRIMARY KEY(id),
+CONSTRAINT fk_quest_team_team FOREIGN KEY (id_team)
+	REFERENCES team(id),
+CONSTRAINT fk_quest_team_quest FOREIGN KEY (id_quest)
+	REFERENCES quest(id),
+CONSTRAINT fk_quest_team_state_of_quest_team FOREIGN KEY (id_state_of_quest_team)
+	REFERENCES state_of_quest_team(id),
+CONSTRAINT unq_quest_team UNIQUE (id_team, id_quest)
+);
+
+
+CREATE TABLE point_quest_team(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_quest_team int not null,
+    id_point int not null,
+    finished bit(1) DEFAULT 0,
+PRIMARY KEY(id),
+CONSTRAINT fk_point_quest_team_quest_team FOREIGN KEY (id_quest_team)
+	REFERENCES quest_team(id),
+CONSTRAINT fk_point_quest_team_point FOREIGN KEY (id_point)
+	REFERENCES point(id),
+CONSTRAINT unq_point_quest_team UNIQUE (id_quest_team, id_point)
+);
+
+CREATE TABLE found_keys_point_quest_team(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_point_quest_team int not null,
+    id_key_point int not null,
+PRIMARY KEY(id),
+CONSTRAINT fk_found_keys_point_quest_team_point_quest_team FOREIGN KEY (id_point_quest_team)
+	REFERENCES quest_team(id),
+CONSTRAINT fk_found_keys_point_quest_team_key_point FOREIGN KEY (id_key_point)
+	REFERENCES key_point(id),
+CONSTRAINT unq_found_keys_point_quest_team UNIQUE (id_point_quest_team, id_key_point)
+);
+
+
+CREATE TABLE administrators(
+    id INT NOT NULL AUTO_INCREMENT,    
+    telegram_id varchar(200) not null,   
+PRIMARY KEY(id),
+CONSTRAINT unq_administrators UNIQUE (telegram_id)
+);
+
+CREATE TABLE request_to_member(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_team int not null,
+    id_member int not null,  
+    init_r TIMESTAMP not null,
+    stop_r TIMESTAMP,
+PRIMARY KEY(id),
+CONSTRAINT fk_request_to_member_team FOREIGN KEY (id_team)
+	REFERENCES team(id),
+CONSTRAINT fk_request_to_member_member FOREIGN KEY (id_member)
+	REFERENCES member(id),
+CONSTRAINT unq_request_to_member UNIQUE (id_team, id_member),
+CONSTRAINT chk_req_to_mem_right_time CHECK ((stop_r IS NULL) OR (init_r <= stop_r))
+);
+
+CREATE TABLE request_to_team(
+    id INT NOT NULL AUTO_INCREMENT,    
+    id_member int not null,
+    id_team int not null,      
+    init_r TIMESTAMP not null,
+    stop_r TIMESTAMP,
+PRIMARY KEY(id),
+CONSTRAINT fk_request_to_member_member FOREIGN KEY (id_member)
+	REFERENCES member(id),
+CONSTRAINT fk_request_to_member_team FOREIGN KEY (id_team)
+	REFERENCES team(id),
+CONSTRAINT unq_request_to_team UNIQUE (id_team, id_member),
+CONSTRAINT chk_req_to_team_right_time CHECK ((stop_r IS NULL) OR (init_r <= stop_r))
+);
+
 --Done
